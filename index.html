@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Auditoría Pro v101</title>
+<style>
+:root { 
+    --accent: #6366f1; --bg: #f1f5f9; --card: #ffffff; 
+    --text: #1e293b; --att: #00a8e0; --telcel: #002f87; --bait: #f59e0b;
+    --payjoy: #facc15; --success: #10b981; --danger: #ef4444;
+}
+body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+
+header { 
+    background: #1e293b; color: white; padding: 20px; 
+    border-radius: 0 0 25px 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.header-left #reloj { font-size: 26px; font-weight: 200; }
+.header-right { text-align: right; }
+.welcome-msg { font-size: 13px; font-weight: 700; margin: 0; }
+.cia-tag { font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 5px; text-transform: uppercase; display: inline-block; margin-top: 4px; }
+
+.main-container { padding: 15px; max-width: 500px; margin: auto; }
+.glass-card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+
+label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 4px; display: block; margin-left: 5px; }
+input, select, textarea { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box; }
+
+.btn { width: 100%; padding: 15px; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; color: white; margin-bottom: 8px; }
+
+.registro { background: white; padding: 15px; border-radius: 16px; margin-bottom: 10px; border: 1px solid #e2e8f0; font-size: 12px; position: relative; }
+.reg-meta { display: flex; justify-content: space-between; font-weight: 800; color: var(--accent); border-bottom: 1px solid #f1f5f9; margin-bottom: 8px; padding-bottom: 4px; }
+
+.full-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; overflow-y: auto; display: none; padding: 20px; box-sizing: border-box; }
+</style>
+</head>
+<body>
+
+<header id="main-header" style="display:none;">
+  <div class="header-left"><div id="reloj">00:00:00</div></div>
+  <div class="header-right">
+    <p class="welcome-msg" id="saludo-user"></p>
+    <span class="cia-tag" id="label-cia"></span>
+  </div>
+</header>
+
+<div class="main-container">
+  <div id="view-login" class="glass-card" style="text-align:center; margin-top: 50px;">
+    <h2 style="margin-top:0">Acceso Seguro</h2>
+    <label>Nombre de Usuario</label>
+    <input type="text" id="log-name" placeholder="Tu Nombre">
+    <label>Contraseña</label>
+    <input type="password" id="log-pass" placeholder="Password Compañía o Auditor">
+    <button class="btn" style="background: var(--accent);" onclick="validarEntrada()">INGRESAR</button>
+  </div>
+
+  <div id="view-app" style="display:none;">
+    <div class="glass-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <span style="font-weight: 800; font-size:10px; color:var(--accent);">NUEVO REGISTRO</span>
+        <button onclick="cerrarSesion()" style="border:none; background:none; color:var(--danger); font-weight:bold; cursor:pointer;">Cerrar Sesión</button>
+      </div>
+
+      <div id="admin-area" style="display:none;">
+        <div style="background: #1e293b; color: #fbbf24; padding: 10px; border-radius: 10px; font-size: 10px; font-weight: 800; text-align: center; margin-bottom: 15px;">🔒 MODO AUDITOR MAESTRO ACTIVO</div>
+        <button class="btn" style="background: #1e293b;" onclick="abrirPanel('panel-admin')">📂 AUDITORÍA COMPLETA (DB)</button>
+        <button class="btn" style="background: var(--accent);" onclick="abrirPanel('panel-modelos')">📝 AGREGAR MODELOS/FICHAS</button>
+        <hr style="border:0.5px solid #f1f5f9; margin: 15px 0;">
+      </div>
+
+      <div id="info-modelo" style="display:none; background:#eff6ff; padding:12px; border-radius:12px; margin-bottom:15px; font-size:12px; border:1px solid #bfdbfe;"></div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div><label>Marca</label><select id="v-mar" onchange="actualizarSelectModelos()"></select></div>
+          <div><label>Modelo</label><select id="v-mod" onchange="mostrarFicha()"></select></div>
+      </div>
+
+      <label>IMEI (15 dígitos)</label>
+      <input type="number" id="v-imei">
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div><label>ICCID</label><input type="number" id="v-iccd"></div>
+          <div><label>UPC</label><input type="text" id="v-upc"></div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div><label>Folio TR</label><input type="number" id="v-tr"></div>
+          <div><label>Precio Final</label><input type="number" id="v-pre"></div>
+      </div>
+
+      <label>Caja de Cobro</label>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <select id="v-tipo-caja"><option>Caja Normal</option><option>Autocobro</option></select>
+          <select id="v-num-caja"></select>
+      </div>
+
+      <div style="background: #fff8e1; padding: 12px; border-radius: 12px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #fef3c7;">
+          <span style="font-size:12px; font-weight:bold; color:#854d0e;">💎 ¿EQUIPO PAYJOY?</span>
+          <input type="checkbox" id="v-pj" style="width:20px; height:20px; margin:0;">
+      </div>
+
+      <button class="btn" style="background: var(--success);" onclick="registrarVenta()">💾 REGISTRAR VENTA</button>
+    </div>
+
+    <h3 style="font-size:14px; margin-left:10px;">Mis Registros de Hoy</h3>
+    <div id="lista-personal"></div>
+  </div>
+</div>
+
+<div id="panel-admin" class="full-screen">
+  <div style="display:flex; justify-content:space-between; align-items:center;"><h3>Base Maestra</h3><button onclick="cerrarPanel('panel-admin')" class="btn" style="background:var(--text); width:auto; padding:5px 15px;">X</button></div>
+  <button class="btn" style="background:var(--success)" onclick="exportarCSV()">📥 Exportar a Excel</button>
+  <div id="lista-maestra"></div>
+</div>
+
+<div id="panel-modelos" class="full-screen">
+  <div style="display:flex; justify-content:space-between; align-items:center;"><h3>Gestión de Equipos</h3><button onclick="cerrarPanel('panel-modelos')" class="btn" style="background:var(--danger); width:auto; padding:5px 15px;">X</button></div>
+  <div class="glass-card">
+      <label>Marca</label><select id="new-mar"><option>Samsung</option><option>Apple</option><option>Motorola</option><option>Xiaomi</option><option>ZTE</option></select>
+      <label>Modelo</label><input type="text" id="new-mod">
+      <label>Ficha Técnica</label><textarea id="new-ficha" rows="3"></textarea>
+      <button class="btn" style="background:var(--accent)" onclick="guardarNuevoModelo()">Guardar Modelo</button>
+  </div>
+</div>
+
+<script>
+let MODELOS_DB = JSON.parse(localStorage.getItem("gm_modelos_db")) || {
+  "Samsung": [{nom: "Galaxy A54", ficha: "8GB RAM, 128GB"}],
+  "Apple": [{nom: "iPhone 15", ficha: "Chip A16"}]
+};
+
+function tick() { document.getElementById("reloj").innerText = new Date().toLocaleTimeString('en-GB'); setTimeout(tick, 1000); }
+tick();
+
+function validarEntrada() {
+    const user = document.getElementById('log-name').value.trim();
+    const pass = document.getElementById('log-pass').value.trim();
+    
+    // VALIDACIÓN ESTRICTA OMAR
+    if(user === "Omar Ortega Caro" && pass === "Google3.1416") {
+        localStorage.setItem("gm_user", user);
+        localStorage.setItem("gm_cia", "MASTER");
+        localStorage.setItem("gm_role", "AUDITOR");
+        location.reload();
+    } 
+    // VALIDACIÓN COMPAÑÍAS
+    else if (user && (pass === "ATT" || pass === "BAIT")) {
+        localStorage.setItem("gm_user", user);
+        localStorage.setItem("gm_cia", pass);
+        localStorage.setItem("gm_role", "VENDEDOR");
+        location.reload();
+    }
+    else {
+        alert("Credenciales incorrectas. Verifica tu nombre y contraseña.");
+    }
+}
+
+window.onload = function() {
+  const user = localStorage.getItem("gm_user");
+  const cia = localStorage.getItem("gm_cia");
+  const role = localStorage.getItem("gm_role");
+  
+  if(user) {
+    document.getElementById("view-app").style.display = "block";
+    document.getElementById("view-login").style.display = "none";
+    document.getElementById("main-header").style.display = "flex";
+    document.getElementById("saludo-user").innerText = "Bienvenido, " + user;
+    
+    const labelCia = document.getElementById("label-cia");
+    labelCia.innerText = cia;
+    if(cia === "ATT") labelCia.style.background = "var(--att)";
+    if(cia === "BAIT") labelCia.style.background = "var(--bait)";
+    if(cia === "MASTER") labelCia.style.background = "#1e293b";
+
+    if(role === "AUDITOR") document.getElementById("admin-area").style.display = "block";
+    
+    const selCaja = document.getElementById("v-num-caja");
+    for(let i=1; i<=10; i++) selCaja.innerHTML += `<option value="${i}">Caja ${i}</option>`;
+    const marSelect = document.getElementById("v-mar");
+    Object.keys(MODELOS_DB).forEach(m => marSelect.innerHTML += `<option>${m}</option>`);
+    actualizarSelectModelos();
+    dibujarListas();
+  }
+};
+
+function actualizarSelectModelos() {
+    const marca = document.getElementById("v-mar").value;
+    const modSelect = document.getElementById("v-mod");
+    modSelect.innerHTML = "";
+    if(MODELOS_DB[marca]) MODELOS_DB[marca].forEach(m => modSelect.innerHTML += `<option value="${m.nom}">${m.nom}</option>`);
+    mostrarFicha();
+}
+
+function mostrarFicha() {
+    const marca = document.getElementById("v-mar").value;
+    const modeloNom = document.getElementById("v-mod").value;
+    const box = document.getElementById("info-modelo");
+    const modeloObj = MODELOS_DB[marca]?.find(m => m.nom === modeloNom);
+    if(modeloObj && modeloObj.ficha) { box.style.display = "block"; box.innerHTML = `⚙️ <b>Specs:</b> ${modeloObj.ficha}`; } 
+    else { box.style.display = "none"; }
+}
+
+function registrarVenta() {
+    const data = {
+        ven: localStorage.getItem("gm_user"),
+        cia: localStorage.getItem("gm_cia"),
+        mar: document.getElementById("v-mar").value,
+        mod: document.getElementById("v-mod").value,
+        imei: document.getElementById("v-imei").value,
+        iccd: document.getElementById("v-iccd").value,
+        upc: document.getElementById("v-upc").value,
+        tr: document.getElementById("v-tr").value,
+        pre: document.getElementById("v-pre").value,
+        tipoCaja: document.getElementById("v-tipo-caja").value,
+        numCaja: document.getElementById("v-num-caja").value,
+        pj: document.getElementById("v-pj").checked,
+        fec: new Date().toLocaleDateString(),
+        hor: new Date().toLocaleTimeString()
+    };
+    if(!data.imei) return alert("Falta IMEI");
+    let db = JSON.parse(localStorage.getItem("gm_db") || "[]");
+    db.unshift(data);
+    localStorage.setItem("gm_db", JSON.stringify(db));
+    location.reload();
+}
+
+function dibujarListas() {
+    const db = JSON.parse(localStorage.getItem("gm_db") || "[]");
+    const mast = document.getElementById("lista-maestra");
+    const pers = document.getElementById("lista-personal");
+    const user = localStorage.getItem("gm_user");
+    db.forEach(v => {
+        const html = `<div class="registro">
+            <div class="reg-meta"><span>${v.fec} | ${v.hor}</span>${v.pj ? '<span>💎</span>' : ''}</div>
+            <b>${v.mar} ${v.mod}</b><br>IMEI: ${v.imei} | Caja: ${v.numCaja} | Vend: ${v.ven}
+        </div>`;
+        mast.innerHTML += html;
+        if(v.ven === user) pers.innerHTML += html;
+    });
+}
+
+function guardarNuevoModelo() {
+    const mar = document.getElementById("new-mar").value;
+    const nom = document.getElementById("new-mod").value.trim();
+    const ficha = document.getElementById("new-ficha").value.trim();
+    if(!nom) return;
+    if(!MODELOS_DB[mar]) MODELOS_DB[mar] = [];
+    MODELOS_DB[mar].push({nom: nom, ficha: ficha});
+    localStorage.setItem("gm_modelos_db", JSON.stringify(MODELOS_DB));
+    location.reload();
+}
+
+function exportarCSV() {
+    const db = JSON.parse(localStorage.getItem("gm_db") || "[]");
+    let csv = "\uFEFFFecha,Hora,Vendedor,Compania,Marca,Modelo,IMEI,ICCID,UPC,TR,Precio,Tipo,Caja,PayJoy\n";
+    db.forEach(v => { csv += `${v.fec},${v.hor},${v.ven},${v.cia},${v.mar},${v.mod},${v.imei},${v.iccd},${v.upc},${v.tr},${v.pre},${v.tipoCaja},${v.numCaja},${v.pj?'SI':'NO'}\n`; });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Reporte_Auditoria.csv`;
+    link.click();
+}
+
+function abrirPanel(id) { document.getElementById(id).style.display = "block"; }
+function cerrarPanel(id) { document.getElementById(id).style.display = "none"; }
+function cerrarSesion() { localStorage.clear(); location.reload(); }
+</script>
+</body>
+</html>
